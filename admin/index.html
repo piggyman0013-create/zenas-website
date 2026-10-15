@@ -11,17 +11,19 @@
 </head>
 <body>
 <div id="login" class="login hidden">
-  <form class="card" id="loginForm">
+  <form class="card" id="loginForm" autocomplete="off">
     <img src="../assets/img/logo.png" alt="Zenas" class="logo">
     <h1>ระบบหลังบ้าน</h1>
     <p class="muted">เชื่อมกับ GitHub repository ของเว็บ เพื่อแก้ไขข้อมูลและเผยแพร่ได้ทันที</p>
-    <label>GitHub owner (ชื่อผู้ใช้ / องค์กร)<input name="owner" required placeholder="เช่น zenastechnology"></label>
-    <label>Repository<input name="repo" required placeholder="เช่น zenas-website"></label>
-    <div class="row2">
-      <label>Branch<input name="branch" value="main" required></label>
-      <label>โฟลเดอร์เว็บใน repo<input name="prefix" placeholder="(ว่าง = root)"></label>
-    </div>
-    <label>Personal access token<input name="token" type="password" required autocomplete="off" placeholder="github_pat_..."></label>
+    <label>GitHub owner (ชื่อผู้ใช้ / องค์กร)<input name="owner" required value="piggyman0013-create" autocomplete="off" spellcheck="false"></label>
+    <label>Repository<input name="repo" required value="zenas-website" autocomplete="off" spellcheck="false"></label>
+    <details class="small"><summary class="muted" style="cursor:pointer">ตั้งค่าขั้นสูง (ปกติไม่ต้องแก้)</summary>
+      <div class="row2" style="margin-top:10px">
+        <label>Branch<input name="branch" value="main" required autocomplete="off"></label>
+        <label>โฟลเดอร์เว็บใน repo<input name="prefix" placeholder="(ว่าง = root)" autocomplete="off" data-lpignore="true"></label>
+      </div>
+    </details>
+    <label>Personal access token<input name="token" type="password" required autocomplete="new-password" placeholder="github_pat_..." data-lpignore="true"></label>
     <label class="check"><input type="checkbox" name="remember" checked> จำการตั้งค่าไว้ในเบราว์เซอร์นี้</label>
     <button class="btn primary" type="submit">เข้าสู่ระบบ</button>
     <button class="btn ghost" type="button" id="previewBtn">เปิดแบบดูอย่างเดียว (ไม่บันทึก)</button>
