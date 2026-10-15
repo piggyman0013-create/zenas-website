@@ -1,0 +1,75 @@
+{
+ "hero": [
+  {
+   "image": "media/banner/1697802978592-sinesi.webp",
+   "title": "YOUR SMART GYM",
+   "subtitle": "innovative multifcunctional smart station",
+   "link": "product.html?slug=sintesi"
+  },
+  {
+   "image": "media/banner/1696924899516-coach-banner.webp",
+   "title": "APEX Team Series",
+   "subtitle": "GPS Tracker Achives",
+   "link": ""
+  },
+  {
+   "image": "media/banner/1696934373175-3.webp",
+   "title": "",
+   "subtitle": "",
+   "link": ""
+  },
+  {
+   "image": "media/banner/1704961293778-unnamed--4.webp",
+   "title": "",
+   "subtitle": "",
+   "link": ""
+  },
+  {
+   "image": "media/banner/1699433412738-cryogenics-featured-image-rpd-montage.webp",
+   "title": "",
+   "subtitle": "",
+   "link": ""
+  },
+  {
+   "image": "media/banner/1696055170762-BANNER-Hero--3.gif",
+   "title": "MASSAGIO",
+   "subtitle": "I-Supreme Luxury 4D Massage chair",
+   "link": "product.html?slug=massagio"
+  }
+ ],
+ "hero_mobile": [
+  {
+   "image": "media/banner/1696928362244-Rectangle-74.webp",
+   "title": "Elevate your Energy",
+   "subtitle": "Portable gas Analyzer",
+   "link": "product.html?slug=vo2-master"
+  },
+  {
+   "image": "media/banner/1696929251743-Capture.webp",
+   "title": "SINTESI",
+   "subtitle": "Multifunctional smart station digital gym",
+   "link": "product.html?slug=sintesi"
+  },
+  {
+   "image": "media/banner/1697809233237-sinesi-mobile.webp",
+   "title": "SINTESI",
+   "subtitle": "Multifunctional smart station digital gym",
+   "link": "product.html?slug=sintesi"
+  }
+ ],
+ "partners": [
+  "media/banner/1695983275822-8.webp",
+  "media/banner/1695974480042-7.webp",
+  "media/banner/1695974480003-1.webp",
+  "media/banner/1695974480048-3.webp",
+  "media/banner/1695974480043-2.webp",
+  "media/banner/1695983275837-13.webp",
+  "media/banner/1695974480015-5.webp",
+  "media/banner/1695974480047-4.webp",
+  "media/banner/1695983275792-10.webp",
+  "media/banner/1695983275849-9.webp",
+  "media/banner/1695983275855-11.webp",
+  "media/banner/1695983275864-14.webp",
+  "media/banner/1695983275881-15.webp"
+ ]
+}

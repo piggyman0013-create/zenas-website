@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Page not found | Zenas Technology.</title>
+<link rel="icon" type="image/png" href="/assets/img/favicon.png">
+<script>
+  // Redirect links from the old Nuxt site (e.g. /product-detail/sintesi) to the new pages.
+  (function () {
+    var base = location.pathname.replace(/\/(product-detail|blog-detail|products|blog|contact-us|terms|privacy)(\/.*)?$/, '/');
+    var p = location.pathname, m;
+    var to = null;
+    if ((m = p.match(/\/product-detail\/([^/?#]+)/))) to = 'product.html?slug=' + m[1];
+    else if ((m = p.match(/\/blog-detail\/([^/?#]+)/))) to = 'post.html?slug=' + m[1];
+    else if (/\/products\/?$/.test(p)) to = 'products.html' + location.search;
+    else if (/\/blog\/?$/.test(p)) to = 'blog.html';
+    else if (/\/contact-us\/?$/.test(p)) to = 'contact.html';
+    if (to) location.replace(base + to);
+  })();
+</script>
+<style>body{font-family:system-ui,sans-serif;display:grid;place-items:center;min-height:90vh;margin:0;color:#1b1b1f}a{color:#1c41b0}</style>
+</head>
+<body>
+<div style="text-align:center">
+  <h1 style="font-weight:500">Page not found</h1>
+  <p><a href="/">Go to the Zenas Technology home page</a></p>
+</div>
+</body>
+</html>

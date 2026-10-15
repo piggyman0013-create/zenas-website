@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Zenas Admin</title>
+<link rel="icon" type="image/png" href="../assets/img/favicon.png">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.snow.min.css">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+<div id="login" class="login hidden">
+  <form class="card" id="loginForm">
+    <img src="../assets/img/logo.png" alt="Zenas" class="logo">
+    <h1>ระบบหลังบ้าน</h1>
+    <p class="muted">เชื่อมกับ GitHub repository ของเว็บ เพื่อแก้ไขข้อมูลและเผยแพร่ได้ทันที</p>
+    <label>GitHub owner (ชื่อผู้ใช้ / องค์กร)<input name="owner" required placeholder="เช่น zenastechnology"></label>
+    <label>Repository<input name="repo" required placeholder="เช่น zenas-website"></label>
+    <div class="row2">
+      <label>Branch<input name="branch" value="main" required></label>
+      <label>โฟลเดอร์เว็บใน repo<input name="prefix" placeholder="(ว่าง = root)"></label>
+    </div>
+    <label>Personal access token<input name="token" type="password" required autocomplete="off" placeholder="github_pat_..."></label>
+    <label class="check"><input type="checkbox" name="remember" checked> จำการตั้งค่าไว้ในเบราว์เซอร์นี้</label>
+    <button class="btn primary" type="submit">เข้าสู่ระบบ</button>
+    <button class="btn ghost" type="button" id="previewBtn">เปิดแบบดูอย่างเดียว (ไม่บันทึก)</button>
+    <p class="muted small">Token ต้องเป็น fine-grained token ที่จำกัดเฉพาะ repo นี้ สิทธิ์ <b>Contents: Read and write</b> เท่านั้น — ดูวิธีสร้างใน README</p>
+    <div class="err hidden" id="loginErr"></div>
+  </form>
+</div>
+
+<div id="shell" class="shell hidden">
+  <aside class="side">
+    <img src="../assets/img/logo-white.png" alt="Zenas" class="logo">
+    <nav id="tabs">
+      <button data-tab="products">สินค้า</button>
+      <button data-tab="blogs">บทความ / รีวิว</button>
+      <button data-tab="categories">หมวดสินค้า</button>
+      <button data-tab="banners">แบนเนอร์ & พาร์ทเนอร์</button>
+      <button data-tab="settings">ข้อมูลบริษัท</button>
+      <button data-tab="pages">ข้อความหน้าเว็บ</button>
+    </nav>
+    <div class="side-foot">
+      <div id="who" class="small"></div>
+      <a href="../index.html" target="_blank" class="small">เปิดหน้าเว็บ ↗</a>
+      <button class="link small" id="logout">ออกจากระบบ</button>
+    </div>
+  </aside>
+  <main class="main">
+    <header class="bar">
+      <div id="crumb" class="crumb"></div>
+      <div class="bar-actions">
+        <span id="dirty" class="pill hidden"></span>
+        <button class="btn ghost" id="exportBtn" title="ดาวน์โหลดไฟล์ข้อมูลที่แก้ไขแล้ว">ดาวน์โหลด JSON</button>
+        <button class="btn primary" id="publishBtn" disabled>เผยแพร่การเปลี่ยนแปลง</button>
+      </div>
+    </header>
+    <section id="view" class="view"></section>
+  </main>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.min.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,173 @@
+{
+ "site_name": "Zenas Technology.",
+ "meta_title": "Zenas Technology Co., Ltd. | Leading Importers of Advanced Medical & Sports Technology",
+ "meta_description": "Discover cutting-edge medical and sports technology equipment at Zenas Technology. From the Functional Line to Tobii Pro Glasses, we bring global innovations to your doorstep. Explore our range now",
+ "meta_keywords": "Medical Technology, Sports Equipment, Tobii Pro Glasses, Functional Line, Advanced Medical Care, Eye-Tracking Technology, Cognitive Testing, Physical Testing, Home Medical Solutions, Quality Medical Imports, Zenas Technology, Medical Equipment Importers, Sports Tech Innovation",
+ "company_name": "Zenas Technology Co., Ltd.",
+ "company_name_long": "Zenas Technology Company Limited",
+ "address": "129/196 Soi Nawamin163 Nuanchan Beungkum BANGKOK 10230 THAILAND",
+ "phone": "+662-519-0975",
+ "fax": "+662-519-0976",
+ "email": "info@zenastechnology.com",
+ "tax_id": "0105546066601",
+ "hours": "Mondays to Friday  08:30 - 17:30",
+ "google_map": "https://maps.app.goo.gl/zBKARHHdqdUfzZSh8",
+ "google_map_embed": "https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d242.13120067310822!2d100.6500439!3d13.8330808!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x311d62e4768850b7%3A0x5d355519342fa0b3!2z4Lia4Lij4Li04Lip4Lix4LiXIOC4i-C4teC4meC4seC4quC5gOC4l-C4hOC5guC4meC5guC4peC4ouC4tSDguIjguLPguIHguLHguJQ!5e0!3m2!1sen!2sth!4v1697884461828!5m2!1sen!2sth",
+ "catalog_pdf": "media/storage/1704336352701-Zenas_Catalog-2024.pdf",
+ "youtube_intro": "O58vfPJUxPY",
+ "contact_form_endpoint": "",
+ "socials": [
+  {
+   "name": "instagram",
+   "url": "https://www.instagram.com/zenastechnology/",
+   "icon": "media/socials/1699869332411-Instagram_logo_2022.svg.webp"
+  },
+  {
+   "name": "youtube",
+   "url": "https://www.youtube.com/channel/UC6nxcdQDBErV-lrdbBZcBWg",
+   "icon": "media/socials/1699519726944-1384060.webp"
+  },
+  {
+   "name": "line",
+   "url": "https://lin.ee/wtCZMRn",
+   "icon": "media/socials/1699519682720-icon-line.webp"
+  },
+  {
+   "name": "facebook",
+   "url": "https://www.facebook.com/zenastechnology",
+   "icon": "media/socials/1699518116632-facebook-icon--1.webp"
+  }
+ ],
+ "nav": [
+  {
+   "title": "Home",
+   "uri": "/",
+   "group": "header"
+  },
+  {
+   "title": "Products",
+   "uri": "/products",
+   "group": "header"
+  },
+  {
+   "title": "Blog",
+   "uri": "/blog",
+   "group": "header"
+  },
+  {
+   "title": "Contact Us",
+   "uri": "/contact-us",
+   "group": "header"
+  },
+  {
+   "title": "Home",
+   "uri": "/",
+   "group": "footer"
+  },
+  {
+   "title": "Products",
+   "uri": "/products",
+   "group": "footer"
+  },
+  {
+   "title": "Blog",
+   "uri": "/blog",
+   "group": "footer"
+  },
+  {
+   "title": "Contact Us",
+   "uri": "/contact-us",
+   "group": "footer"
+  }
+ ],
+ "pages": {
+  "home": {
+   "title": "Home",
+   "meta_title": "Zenas Technology Co., Ltd. | Leading Importers of Advanced Medical & Sports Technology",
+   "meta_description": "Discover cutting-edge medical and sports technology equipment at Zenas Technology. From the Functional Line to Tobii Pro Glasses, we bring global innovations to your doorstep. Explore our range now",
+   "blocks": {
+    "BannersBanner2": {
+     "Banner": 7,
+     "BannerMoblie": 11
+    },
+    "ProductsCategorylists1": {},
+    "ContentsContent4": {
+     "head": "About Us",
+     "sub_head": "We are division of Zenas Technology",
+     "description": "<p>was established in 2003&nbsp;manages and sells products in these following groups.&nbsp;Innovation Products is our AIM. Simulator System , Sport science Education and for special training and Rehabilititation.&nbsp;Our company devides the distribution channel into 3 ways for the convenience of management and the effectiveness in customer service. We concern not only about the necessity in providing technical knowledge and service of devices and supplies to get the highest benefit from product use, but also about fast and efficient after-sale service for customers in all regions.</p>",
+     "download": "",
+     "download_url": "media/storage/1704336352701-Zenas_Catalog-2024.pdf",
+     "youtube": "O58vfPJUxPY",
+     "readmore_url": "https://www.zenastechnology.com/contact-us"
+    },
+    "OurclientsLists2": {
+     "Banner": 8,
+     "head": "Our Partners"
+    },
+    "ProductsFeature1": {
+     "head": "Features<br />Products",
+     "sub_head": "Discover our best product <br />embrace the industry.",
+     "limit": "4"
+    },
+    "ContactContent1": {
+     "head": "We’re Delivering <br>the Best Customer <br>Experience"
+    },
+    "ContactMap1": {}
+   }
+  },
+  "products": {
+   "title": "Products",
+   "meta_title": "Advanced Sport product and health innovation product  cutting-edge sport technology",
+   "meta_description": "DiscoverMedical Technology, High technology Sports Equipment, Tobii Pro Glasses, Functional Line, Advanced Medical Care, Eye-Tracking Technology, Cognitive Testing, Physical Testing, Home Medical Solutions, Quality Medical Imports,  Medical Equipment Importers, Sports Tech Innovation,   3D Body Scanning",
+   "blocks": {
+    "BannersTop1": {
+     "head": "All Products",
+     "sub": "product"
+    },
+    "BreadcrumbList2": {
+     "title": "Product Category",
+     "sub_title": null,
+     "link": ""
+    },
+    "ProductsLists1": {}
+   }
+  },
+  "blog": {
+   "title": "Blog",
+   "meta_title": "Intelligent Equipment  | Zenas Technology",
+   "meta_description": "Explore Zenas Technology's range of intelligent  equipment designed for tech-savvy enthusiasts. Discover how technology enhances your workout experience in our latest news",
+   "blocks": {
+    "BannersTop1": {
+     "head": "Blog",
+     "sub": "The best Sports blog on the internet"
+    },
+    "BreadcrumbList1": {
+     "page": "Blog"
+    },
+    "BlogFeatured2": {}
+   }
+  },
+  "contact-us": {
+   "title": "Contact Us",
+   "meta_title": "Contact  Zenas Technology",
+   "meta_description": "Contact  Zenas Technology",
+   "blocks": {
+    "BannersTop1": {
+     "head": "Contact Us",
+     "sub": "We are division of Zenas Technology"
+    },
+    "BreadcrumbList1": {
+     "page": "Contact Us"
+    },
+    "ContactContent2": {
+     "head": "We’re Delivering the Best Customer Experience"
+    },
+    "ContactMap1": {}
+   }
+  }
+ },
+ "legal": {
+  "terms": "<h2>Use of this website</h2><p>The information on this website is provided by {{company}} for general information about the products we import and distribute. Product specifications, images and availability may change without notice. Please contact us for a formal quotation and the latest technical documents.</p><h2>Intellectual property</h2><p>Brand names, logos, product images and documents belong to {{company}} or to the respective manufacturers and may not be reused without permission.</p><h2>Enquiries</h2><p>By sending the contact form you agree that we may use the details you provide to reply to your enquiry. See our <a href=\"privacy.html\">Privacy Policy</a>.</p><h2>Contact</h2><p>{{email}} &middot; {{phone}}</p>",
+  "privacy": "<h2>Data we collect</h2><p>When you use the contact form we collect your name, email, phone number (optional) and your message. We do not use advertising cookies on this website.</p><h2>How we use it</h2><p>{{company}} uses this information only to answer your enquiry and to provide information about our products and services. We do not sell your personal data.</p><h2>Retention and your rights</h2><p>Enquiries are kept for as long as needed to serve you. Under the Personal Data Protection Act B.E. 2562 (PDPA) you may ask to access, correct or delete your data at any time by contacting {{email}}.</p>"
+ }
+}
