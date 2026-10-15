@@ -282,13 +282,69 @@
   }
 
   /** Content block renderer shared by products & posts. layout: 1 dark split, 2 image-left, 3 image-right, 4 centered */
-  function blocksHtml(blocks) {
-    return (blocks || []).filter((b) => b.active !== false && (b.image || b.title || stripTags(b.html).trim())).map((b) => {
-      const hasMedia = !!b.image;
-      const media = hasMedia ? `<div class="media"><img src="${esc(b.image)}" alt="${esc(b.title || '')}" loading="lazy"></div>` : '';
-      const text = (b.title || b.html) ? `<div class="txt">${b.title ? `<h3>${esc(b.title)}</h3>` : ''}<div class="html rich">${b.html || ''}</div></div>` : '';
+  /**
+   * Content sections ("blocks") shared by product and blog pages.
+   * type: media (image + text, layout 1–4) · text · features · specs · gallery · video · cta · quote · downloads
+   * bg:   white · light · navy   (background band; legacy layout 1 = navy media)
+   */
+  const hasText = (h) => !!stripTags(h).trim();
+  const head = (b) => `${b.title ? `<h3>${esc(b.title)}</h3>` : ''}${hasText(b.html) ? `<div class="html rich">${b.html}</div>` : ''}`;
+  const BLOCK = {
+    media(b) {
       const layout = [1, 2, 3, 4].includes(+b.layout) ? +b.layout : 4;
-      return `<section class="blk l${layout} ${hasMedia ? '' : 'no-media'}"><div class="container">${media}${text}</div></section>`;
+      const media = b.image ? `<div class="media"><img src="${esc(b.image)}" alt="${esc(b.title || '')}" loading="lazy"></div>` : '';
+      const text = b.title || hasText(b.html) ? `<div class="txt">${head(b)}</div>` : '';
+      if (!media && !text) return '';
+      return { cls: `l${layout} ${b.image ? '' : 'no-media'}`, inner: media + text, bg: layout === 1 ? 'navy' : b.bg };
+    },
+    text(b) {
+      if (!b.title && !hasText(b.html)) return '';
+      return { cls: `align-${b.align === 'center' ? 'center' : 'left'}`, inner: `<div class="txt">${head(b)}</div>` };
+    },
+    features(b) {
+      const items = (b.items || []).filter((x) => x.title || x.text || x.image);
+      if (!items.length) return '';
+      return { inner: `<div class="sec-head">${head(b)}</div><div class="feat-grid cols-${b.columns || 3}">${items.map((x) => `
+        <div class="feat">${x.image ? `<img src="${esc(x.image)}" alt="${esc(x.title || '')}" loading="lazy">` : '<span class="dot"></span>'}
+          ${x.title ? `<h4>${esc(x.title)}</h4>` : ''}${x.text ? `<p>${esc(x.text)}</p>` : ''}</div>`).join('')}</div>` };
+    },
+    specs(b) {
+      const rows = (b.rows || []).filter((r) => r.label || r.value);
+      if (!rows.length) return '';
+      return { inner: `<div class="sec-head">${head(b)}</div><table class="spec-table"><tbody>${rows.map((r) => `<tr><th>${esc(r.label)}</th><td>${esc(r.value)}</td></tr>`).join('')}</tbody></table>` };
+    },
+    gallery(b) {
+      const imgs = (b.images || []).filter(Boolean);
+      if (!imgs.length) return '';
+      return { inner: `<div class="sec-head">${head(b)}</div><div class="gal-grid cols-${b.columns || 3}">${imgs.map((src) => `<a href="${esc(src)}" target="_blank" rel="noopener"><img src="${esc(src)}" alt="" loading="lazy"></a>`).join('')}</div>` };
+    },
+    video(b) {
+      if (!b.youtube) return '';
+      return { inner: `<div class="sec-head">${b.title ? `<h3>${esc(b.title)}</h3>` : ''}</div><div class="video-wrap"><iframe src="${ytEmbed(b.youtube)}" title="${esc(b.title || 'Video')}" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>${hasText(b.html) ? `<div class="html rich caption">${b.html}</div>` : ''}` };
+    },
+    cta(b) {
+      if (!b.title && !hasText(b.html)) return '';
+      const btn = (label, href, cls) => (label && href ? `<a class="btn ${cls}" href="${esc(href)}" ${/^https?:|\.pdf$/i.test(href) ? 'target="_blank" rel="noopener"' : ''}>${esc(label)}</a>` : '');
+      return { cls: 'cta-band', inner: `<div class="cta-box"><div>${head(b)}</div><div class="cta-actions">${btn(b.button, b.link, 'btn-white')}${btn(b.button2, b.link2, 'btn-outline-white')}</div></div>` };
+    },
+    quote(b) {
+      if (!hasText(b.html)) return '';
+      return { inner: `<figure class="quote">${b.image ? `<img src="${esc(b.image)}" alt="${esc(b.author || '')}" loading="lazy">` : ''}<div><blockquote class="rich">${b.html}</blockquote>${b.author ? `<figcaption><b>${esc(b.author)}</b>${b.role ? `<span>${esc(b.role)}</span>` : ''}</figcaption>` : ''}</div></figure>` };
+    },
+    downloads(b) {
+      const files = (b.files || []).filter((f) => f.file);
+      if (!files.length) return '';
+      return { inner: `<div class="sec-head">${head(b)}</div><div class="dl-list">${files.map((f) => `<a class="dl" href="${esc(f.file)}" target="_blank" rel="noopener" download>${icon.fax}<span>${esc(f.label || f.file.split('/').pop())}</span><em>${esc((f.file.split('.').pop() || '').toUpperCase())}</em></a>`).join('')}</div>` };
+    },
+  };
+
+  function blocksHtml(blocks) {
+    return (blocks || []).filter((b) => b && b.active !== false).map((b) => {
+      const type = BLOCK[b.type] ? b.type : 'media';
+      const out = BLOCK[type](b);
+      if (!out) return '';
+      const bg = ['light', 'navy'].includes(out.bg || b.bg) ? out.bg || b.bg : 'white';
+      return `<section class="blk t-${type} bg-${bg} ${out.cls || ''}"><div class="container">${out.inner}</div></section>`;
     }).join('');
   }
 

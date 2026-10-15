@@ -1,0 +1,55 @@
+{
+ "sections": [
+  {"id": "sec-media-left", "name": "รูปซ้าย ข้อความขวา", "description": "อธิบายจุดเด่นหนึ่งเรื่องพร้อมรูปประกอบ",
+   "block": {"type": "media", "layout": 2, "bg": "white", "title": "Feature headline", "image": "", "html": "<p>Describe this feature in two or three short sentences. Explain what it does and why it matters to the customer.</p>"}},
+  {"id": "sec-media-right", "name": "ข้อความซ้าย รูปขวา", "description": "ใช้สลับกับแบบรูปซ้ายให้หน้าอ่านง่าย",
+   "block": {"type": "media", "layout": 3, "bg": "white", "title": "Feature headline", "image": "", "html": "<p>Describe this feature in two or three short sentences. Explain what it does and why it matters to the customer.</p>"}},
+  {"id": "sec-media-center", "name": "รูปใหญ่กึ่งกลาง", "description": "รูปหรืออินโฟกราฟิกเต็มความกว้าง มีหัวข้อและคำอธิบายด้านล่าง",
+   "block": {"type": "media", "layout": 4, "bg": "white", "title": "Headline", "image": "", "html": "<p>Short caption that explains the image.</p>"}},
+  {"id": "sec-media-navy", "name": "แถบสีกรมท่า รูป + ข้อความ", "description": "แถบสีเข้มเด่นสะดุดตา ใช้เน้นจุดขายสำคัญ",
+   "block": {"type": "media", "layout": 1, "bg": "navy", "title": "Key selling point", "image": "", "html": "<p>Highlight the most important benefit here.</p>"}},
+  {"id": "sec-text", "name": "ข้อความล้วน", "description": "ย่อหน้าข้อความ ไม่มีรูป",
+   "block": {"type": "text", "align": "left", "bg": "white", "title": "Heading", "html": "<p>Write your paragraph here.</p>"}},
+  {"id": "sec-features-3", "name": "จุดเด่น 3 ข้อ", "description": "การ์ด 3 ช่อง แต่ละช่องมีรูปหรือไอคอน หัวข้อ และคำอธิบายสั้น",
+   "block": {"type": "features", "columns": 3, "bg": "light", "title": "Why choose {{title}}", "html": "", "items": [
+     {"image": "", "title": "Benefit one", "text": "One short sentence about this benefit."},
+     {"image": "", "title": "Benefit two", "text": "One short sentence about this benefit."},
+     {"image": "", "title": "Benefit three", "text": "One short sentence about this benefit."}]}},
+  {"id": "sec-features-4", "name": "จุดเด่น 4 ข้อ", "description": "การ์ด 4 ช่อง เหมาะกับคุณสมบัติหลายข้อ",
+   "block": {"type": "features", "columns": 4, "bg": "white", "title": "Key features", "html": "", "items": [
+     {"image": "", "title": "Feature one", "text": "Short description."},
+     {"image": "", "title": "Feature two", "text": "Short description."},
+     {"image": "", "title": "Feature three", "text": "Short description."},
+     {"image": "", "title": "Feature four", "text": "Short description."}]}},
+  {"id": "sec-specs", "name": "ตารางสเปก", "description": "ตารางข้อมูลจำเพาะ 2 คอลัมน์ (หัวข้อ / ค่า)",
+   "block": {"type": "specs", "bg": "white", "title": "Technical specifications", "html": "", "rows": [
+     {"label": "Model", "value": ""}, {"label": "Dimensions (W × D × H)", "value": ""}, {"label": "Weight", "value": ""},
+     {"label": "Power supply", "value": ""}, {"label": "Certification", "value": ""}, {"label": "Warranty", "value": ""}]}},
+  {"id": "sec-gallery", "name": "แกลเลอรีรูป", "description": "ตารางรูป 3 คอลัมน์ คลิกเพื่อดูรูปใหญ่",
+   "block": {"type": "gallery", "columns": 3, "bg": "white", "title": "Gallery", "html": "", "images": []}},
+  {"id": "sec-video", "name": "วิดีโอ YouTube", "description": "วิดีโอขนาดใหญ่กึ่งกลาง พร้อมคำบรรยาย",
+   "block": {"type": "video", "bg": "light", "title": "See {{title}} in action", "youtube": "", "html": ""}},
+  {"id": "sec-cta", "name": "ปุ่มติดต่อ / ขอใบเสนอราคา", "description": "แถบไล่สีพร้อมปุ่มติดต่อ ใช้ปิดท้ายหน้าสินค้า",
+   "block": {"type": "cta", "bg": "white", "title": "Interested in {{title}}?", "html": "<p>Contact our team for a quotation, demo or technical advice.</p>",
+     "button": "Contact us", "link": "contact.html", "button2": "Call +662-519-0975", "link2": "tel:+6625190975"}},
+  {"id": "sec-quote", "name": "คำรับรอง / รีวิวลูกค้า", "description": "คำพูดจากลูกค้าหรือนักกีฬา พร้อมรูปและชื่อ",
+   "block": {"type": "quote", "bg": "light", "image": "", "html": "<p>“Write the customer's quote here.”</p>", "author": "Customer name", "role": "Position, organization"}},
+  {"id": "sec-downloads", "name": "เอกสารดาวน์โหลด", "description": "รายการไฟล์ PDF เช่น โบรชัวร์ คู่มือ ใบรับรอง",
+   "block": {"type": "downloads", "bg": "white", "title": "Downloads", "html": "", "files": [{"label": "Brochure", "file": ""}]}}
+ ],
+ "pages": [
+  {"id": "page-product-standard", "name": "สินค้า — มาตรฐาน", "for": "product", "description": "จุดเด่น 3 ข้อ → รายละเอียด 2 ส่วนสลับรูป → ตารางสเปก → ปุ่มติดต่อ",
+   "sections": ["sec-features-3", "sec-media-left", "sec-media-right", "sec-specs", "sec-cta"]},
+  {"id": "page-product-full", "name": "สินค้า — ครบทุกส่วน", "for": "product", "description": "เพิ่มแกลเลอรี วิดีโอ และเอกสารดาวน์โหลด สำหรับสินค้าหลัก",
+   "sections": ["sec-features-3", "sec-media-left", "sec-media-right", "sec-media-navy", "sec-gallery", "sec-video", "sec-specs", "sec-downloads", "sec-cta"]},
+  {"id": "page-product-simple", "name": "สินค้า — แบบสั้น", "for": "product", "description": "สำหรับรุ่นย่อยหรืออุปกรณ์เสริม: รูปใหญ่ + สเปก + ปุ่มติดต่อ",
+   "sections": ["sec-media-center", "sec-specs", "sec-cta"]},
+  {"id": "page-blog-article", "name": "บทความ — ทั่วไป", "for": "blog", "description": "ข้อความ → รูปประกอบ → ข้อความสรุป",
+   "sections": ["sec-text", "sec-media-right", "sec-text"]},
+  {"id": "page-blog-review", "name": "รีวิวนักกีฬา / ลูกค้า", "for": "blog", "description": "คำรับรอง → แกลเลอรี → เรื่องราว",
+   "sections": ["sec-quote", "sec-gallery", "sec-text"]},
+  {"id": "page-blog-event", "name": "ข่าวกิจกรรม / งานอีเวนต์", "for": "blog", "description": "รูปใหญ่ → รายละเอียดงาน → แกลเลอรี",
+   "sections": ["sec-media-center", "sec-text", "sec-gallery"]}
+ ],
+ "defaults": {"product": "page-product-standard", "blog": "page-blog-article"}
+}

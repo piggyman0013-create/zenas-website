@@ -1,7 +1,8 @@
 /* Zenas admin — edits the site's data/*.json and media, then commits everything to GitHub in one commit. */
 (function () {
   'use strict';
-  const FILES = ['settings', 'banners', 'categories', 'products', 'blogs'];
+  const SITE_FILES = ['settings', 'banners', 'categories', 'products', 'blogs'];
+  const FILES = [...SITE_FILES, 'templates'];
   const LS_KEY = 'zenas-admin-cfg';
   const $ = (s, el = document) => el.querySelector(s);
   const $$ = (s, el = document) => Array.from(el.querySelectorAll(s));
@@ -43,6 +44,13 @@
   async function loadData() {
     const out = {};
     await Promise.all(FILES.map(async (n) => {
+      if (n === 'templates') {
+        try {
+          out[n] = state.preview ? await (await fetch(`../data/templates.json?t=${Date.now()}`)).json()
+            : JSON.parse(await gh('GET', `/contents/${encodeURI(repoPath('data/templates.json'))}?ref=${encodeURIComponent(state.cfg.branch)}`, null, 'application/vnd.github.raw+json'));
+        } catch (e) { out[n] = { sections: [], pages: [], defaults: {} }; }
+        return;
+      }
       if (state.preview) {
         const r = await fetch(`../data/${n}.json?t=${Date.now()}`);
         if (!r.ok) throw new Error(`โหลด data/${n}.json ไม่ได้`);
@@ -65,7 +73,7 @@
     if (state.preview) { toast('โหมดดูอย่างเดียว — ใช้ "ดาวน์โหลด JSON" แทน', 'err'); return; }
     const files = [];
     for (const n of state.dirty) files.push({ path: repoPath(`data/${n}.json`), content: JSON.stringify(state.data[n], null, 1) + '\n', encoding: 'utf-8' });
-    if (state.dirty.size) files.push({ path: repoPath('data/bundle.js'), content: 'window.ZENAS_DATA=' + JSON.stringify(Object.fromEntries(FILES.map((n) => [n, state.data[n]]))) + ';\n', encoding: 'utf-8' });
+    if ([...state.dirty].some((n) => SITE_FILES.includes(n))) files.push({ path: repoPath('data/bundle.js'), content: 'window.ZENAS_DATA=' + JSON.stringify(Object.fromEntries(SITE_FILES.map((n) => [n, state.data[n]]))) + ';\n', encoding: 'utf-8' });
     for (const [p, u] of state.uploads) if (!u.published) files.push({ path: repoPath(p), blob: u.blob, encoding: 'base64' });
     if (!files.length) return;
     const btn = $('#publishBtn'); btn.disabled = true; btn.textContent = 'กำลังเผยแพร่…';
@@ -191,7 +199,7 @@
       const el = h(`<div><div style="font-size:13px;margin-bottom:6px">${esc(label)}</div><div class="img-field"><div class="pv"></div><div><div class="acts"><button type="button" class="btn sm up">อัปโหลด</button><button type="button" class="btn sm danger rm">ลบ</button></div><div class="hint path"></div></div></div></div>`);
       const pv = $('.pv', el), path = $('.path', el);
       const paint = () => {
-        if (kind === 'pdf') { pv.classList.add('pdf'); pv.innerHTML = cur ? `<a href="${esc(src(cur))}" target="_blank">เปิด PDF</a>` : 'ไม่มีไฟล์'; }
+        if (kind === 'pdf') { pv.classList.add('pdf'); pv.innerHTML = cur ? `<a href="${esc(src(cur))}" target="_blank">เปิดไฟล์</a>` : 'ไม่มีไฟล์'; }
         else pv.style.backgroundImage = cur ? `url("${src(cur)}")` : 'none';
         path.textContent = cur || 'ยังไม่มีไฟล์';
       };
@@ -252,17 +260,310 @@
     },
   };
 
-  const LAYOUTS = [[4, 'กึ่งกลาง (รูปบน ข้อความล่าง)'], [2, 'รูปซ้าย ข้อความขวา'], [3, 'ข้อความซ้าย รูปขวา'], [1, 'แถบสีกรมท่า รูปซ้าย']];
-  function blockEditor(b, folder) {
-    const layout = F.select('รูปแบบการจัดวาง', b.layout || 4, LAYOUTS);
-    const title = F.text('หัวข้อ', b.title);
-    const img = F.file('รูปภาพ', b.image, { folder });
-    const html = F.html('เนื้อหา', b.html);
-    const el = h('<div style="display:grid;gap:10px"></div>');
-    const top = h('<div class="grid2"></div>'); top.append(layout.el, title.el);
-    el.append(top, img.el, html.el);
-    return { el, get: () => ({ layout: +layout.get(), title: title.get(), image: img.get(), html: html.get() }) };
+  // ---------------- content sections + templates ----------------
+  const BTYPES = {
+    media: 'รูป + ข้อความ', text: 'ข้อความล้วน', features: 'จุดเด่น (การ์ด)', specs: 'ตารางสเปก', gallery: 'แกลเลอรีรูป',
+    video: 'วิดีโอ YouTube', cta: 'ปุ่มติดต่อ / CTA', quote: 'คำรับรอง / รีวิว', downloads: 'เอกสารดาวน์โหลด',
+  };
+  const BLANK = {
+    media: { type: 'media', layout: 2, bg: 'white', title: '', image: '', html: '' },
+    text: { type: 'text', align: 'left', bg: 'white', title: '', html: '' },
+    features: { type: 'features', columns: 3, bg: 'light', title: '', html: '', items: [{ image: '', title: '', text: '' }, { image: '', title: '', text: '' }, { image: '', title: '', text: '' }] },
+    specs: { type: 'specs', bg: 'white', title: 'Specifications', html: '', rows: [{ label: '', value: '' }] },
+    gallery: { type: 'gallery', columns: 3, bg: 'white', title: '', html: '', images: [] },
+    video: { type: 'video', bg: 'light', title: '', youtube: '', html: '' },
+    cta: { type: 'cta', bg: 'white', title: '', html: '', button: 'Contact us', link: 'contact.html', button2: '', link2: '' },
+    quote: { type: 'quote', bg: 'light', image: '', html: '', author: '', role: '' },
+    downloads: { type: 'downloads', bg: 'white', title: 'Downloads', html: '', files: [{ label: '', file: '' }] },
+  };
+  const LAYOUTS = [[2, 'รูปซ้าย ข้อความขวา'], [3, 'ข้อความซ้าย รูปขวา'], [4, 'รูปใหญ่กึ่งกลาง ข้อความล่าง'], [1, 'แถบสีกรมท่า รูปซ้าย']];
+  const BGS = [['white', 'พื้นขาว'], ['light', 'พื้นฟ้าอ่อน'], ['navy', 'พื้นกรมท่า (ตัวอักษรขาว)']];
+  const typeOf = (b) => (BTYPES[b?.type] ? b.type : 'media');
+  const norm = (b) => ({ ...clone(BLANK[typeOf(b)]), ...clone(b || {}), type: typeOf(b) });
+
+  /** replace {{title}} etc. in every string of a block */
+  function fillVars(obj, vars) {
+    if (typeof obj === 'string') return obj.replace(/\{\{(\w+)\}\}/g, (m, k) => (vars[k] != null && vars[k] !== '' ? vars[k] : m));
+    if (Array.isArray(obj)) return obj.map((x) => fillVars(x, vars));
+    if (obj && typeof obj === 'object') return Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, fillVars(v, vars)]));
+    return obj;
   }
+
+  /** tiny schematic of a section, used on template cards */
+  function thumb(b) {
+    const t = typeOf(b), L = +b.layout || 2, bg = t === 'media' && L === 1 ? 'navy' : b.bg || 'white';
+    const fill = { white: '#ffffff', light: '#eaf2f8', navy: '#1c1c3c' }[bg] || '#fff';
+    const ink = bg === 'navy' ? '#c9d2ff' : '#9aa6c4', img = '#bcd3f5', acc = '#3f7fe0';
+    const lines = (x, y, w, n = 3) => Array.from({ length: n }, (_, i) => `<rect x="${x}" y="${y + i * 7}" width="${i === n - 1 ? w * 0.6 : w}" height="3" rx="1.5" fill="${ink}"/>`).join('');
+    const ttl = (x, y, w) => `<rect x="${x}" y="${y}" width="${w}" height="5" rx="2" fill="${bg === 'navy' ? '#fff' : '#5b6684'}"/>`;
+    let g = '';
+    if (t === 'media') {
+      if (L === 4) g = `<rect x="35" y="8" width="50" height="32" rx="3" fill="${img}"/>${ttl(40, 46, 40)}${lines(30, 56, 60, 2)}`;
+      else { const ix = L === 3 ? 66 : 10, tx = L === 3 ? 10 : 66; g = `<rect x="${ix}" y="12" width="44" height="48" rx="3" fill="${img}"/>${ttl(tx, 20, 38)}${lines(tx, 32, 44)}`; }
+    } else if (t === 'text') g = `${ttl(14, 14, 50)}${lines(14, 26, 92, 5)}`;
+    else if (t === 'features') g = `${ttl(38, 8, 44)}` + [0, 1, 2].map((i) => `<circle cx="${22 + i * 38}" cy="32" r="8" fill="${acc}"/><rect x="${10 + i * 38}" y="46" width="24" height="3" rx="1.5" fill="${ink}"/><rect x="${12 + i * 38}" y="53" width="20" height="3" rx="1.5" fill="${ink}"/>`).join('');
+    else if (t === 'specs') g = `${ttl(14, 8, 50)}` + [0, 1, 2, 3, 4].map((i) => `<rect x="14" y="${20 + i * 10}" width="34" height="3" rx="1.5" fill="${ink}"/><rect x="56" y="${20 + i * 10}" width="50" height="3" rx="1.5" fill="${ink}"/><line x1="14" x2="106" y1="${25 + i * 10}" y2="${25 + i * 10}" stroke="#dde3ee"/>`).join('');
+    else if (t === 'gallery') g = [0, 1, 2, 3, 4, 5].map((i) => `<rect x="${12 + (i % 3) * 33}" y="${10 + Math.floor(i / 3) * 27}" width="29" height="23" rx="3" fill="${img}"/>`).join('');
+    else if (t === 'video') g = `<rect x="22" y="8" width="76" height="46" rx="4" fill="#111827"/><polygon points="54,22 54,40 70,31" fill="#ef4444"/>${lines(36, 60, 48, 1)}`;
+    else if (t === 'cta') g = `<rect x="8" y="18" width="104" height="36" rx="6" fill="url(#gr)"/><rect x="16" y="28" width="46" height="5" rx="2" fill="#fff"/><rect x="16" y="38" width="34" height="3" rx="1.5" fill="#e0ecff"/><rect x="78" y="30" width="26" height="11" rx="5.5" fill="#fff"/>`;
+    else if (t === 'quote') g = `<circle cx="30" cy="34" r="16" fill="${img}"/><rect x="54" y="20" width="3" height="28" fill="${acc}"/>${lines(62, 22, 46, 3)}<rect x="62" y="46" width="26" height="3" rx="1.5" fill="#5b6684"/>`;
+    else if (t === 'downloads') g = `${ttl(14, 8, 44)}` + [0, 1, 2].map((i) => `<rect x="14" y="${20 + i * 15}" width="92" height="11" rx="3" fill="none" stroke="#c5cfe2"/><rect x="18" y="${23 + i * 15}" width="6" height="5" fill="${acc}"/><rect x="28" y="${24 + i * 15}" width="40" height="3" rx="1.5" fill="${ink}"/>`).join('');
+    return `<svg viewBox="0 0 120 72" class="thumb"><defs><linearGradient id="gr"><stop offset="0" stop-color="#1c41b0"/><stop offset="1" stop-color="#3fb6f0"/></linearGradient></defs><rect width="120" height="72" rx="6" fill="${fill}" stroke="#e1e5ee"/>${g}</svg>`;
+  }
+
+  /** editor for one section; returns {el, get} */
+  function blockEditor(raw, folder) {
+    const b = norm(raw);
+    const t = b.type;
+    const el = h('<div style="display:grid;gap:10px"></div>');
+    const parts = {};
+    const add = (k, f) => { parts[k] = f; el.appendChild(f.el); return f; };
+    const row = (fields) => { const g = F.group(fields); el.appendChild(g.el); Object.assign(parts, fields); };
+    const bgField = F.select('พื้นหลังของส่วนนี้', b.bg || 'white', BGS);
+    if (t === 'media') {
+      row({ layout: F.select('การจัดวาง', b.layout || 2, LAYOUTS), bg: bgField });
+      add('title', F.text('หัวข้อ', b.title)); add('image', F.file('รูปภาพ', b.image, { folder })); add('html', F.html('เนื้อหา', b.html));
+    } else if (t === 'text') {
+      row({ align: F.select('การจัดตำแหน่ง', b.align || 'left', [['left', 'ชิดซ้าย'], ['center', 'กึ่งกลาง']]), bg: bgField });
+      add('title', F.text('หัวข้อ', b.title)); add('html', F.html('เนื้อหา', b.html));
+    } else if (t === 'features') {
+      row({ columns: F.select('จำนวนคอลัมน์', b.columns || 3, [[2, '2 คอลัมน์'], [3, '3 คอลัมน์'], [4, '4 คอลัมน์']]), bg: bgField });
+      add('title', F.text('หัวข้อของส่วน', b.title)); add('html', F.html('คำนำ (ไม่ใส่ก็ได้)', b.html));
+      add('items', F.list('การ์ดจุดเด่น', b.items, (x) => {
+        const img = F.file('รูป/ไอคอน (ไม่ใส่ = จุดสีน้ำเงิน)', x.image, { folder }); const tt = F.text('หัวข้อ', x.title); const tx = F.area('คำอธิบายสั้น', x.text, { rows: 2 });
+        const e = h('<div style="display:grid;gap:8px"></div>'); e.append(img.el, tt.el, tx.el);
+        return { el: e, get: () => ({ image: img.get(), title: tt.get(), text: tx.get() }) };
+      }, { image: '', title: '', text: '' }, '+ เพิ่มการ์ด'));
+    } else if (t === 'specs') {
+      add('bg', bgField); add('title', F.text('หัวข้อ', b.title)); add('html', F.html('คำอธิบาย (ไม่ใส่ก็ได้)', b.html));
+      add('rows', F.list('แถวในตาราง', b.rows, (r) => F.group({ label: F.text('หัวข้อ', r.label), value: F.text('ค่า', r.value) }), { label: '', value: '' }, '+ เพิ่มแถว'));
+    } else if (t === 'gallery') {
+      row({ columns: F.select('จำนวนคอลัมน์', b.columns || 3, [[2, '2 คอลัมน์'], [3, '3 คอลัมน์'], [4, '4 คอลัมน์']]), bg: bgField });
+      add('title', F.text('หัวข้อ', b.title)); add('html', F.html('คำอธิบาย (ไม่ใส่ก็ได้)', b.html)); add('images', F.gallery('รูปในแกลเลอรี', b.images, folder));
+    } else if (t === 'video') {
+      add('bg', bgField); add('title', F.text('หัวข้อ', b.title));
+      add('youtube', F.text('YouTube (ลิงก์หรือรหัสวิดีโอ)', b.youtube, { placeholder: 'https://youtu.be/xxxxxxxxxxx' })); add('html', F.html('คำบรรยายใต้วิดีโอ', b.html));
+    } else if (t === 'cta') {
+      add('bg', bgField); add('title', F.text('หัวข้อ', b.title)); add('html', F.html('ข้อความ', b.html));
+      row({ button: F.text('ปุ่มที่ 1 — ข้อความ', b.button), link: F.text('ปุ่มที่ 1 — ลิงก์', b.link, { hint: 'เช่น contact.html, tel:+6625190975, mailto:..., หรือลิงก์ PDF' }) });
+      row({ button2: F.text('ปุ่มที่ 2 — ข้อความ (ไม่ใส่ก็ได้)', b.button2), link2: F.text('ปุ่มที่ 2 — ลิงก์', b.link2) });
+    } else if (t === 'quote') {
+      add('bg', bgField); add('image', F.file('รูปผู้ให้คำรับรอง (ไม่ใส่ก็ได้)', b.image, { folder })); add('html', F.html('คำพูด', b.html));
+      row({ author: F.text('ชื่อ', b.author), role: F.text('ตำแหน่ง / องค์กร / กีฬา', b.role) });
+    } else if (t === 'downloads') {
+      add('bg', bgField); add('title', F.text('หัวข้อ', b.title)); add('html', F.html('คำอธิบาย (ไม่ใส่ก็ได้)', b.html));
+      add('files', F.list('ไฟล์', b.files, (x) => F.group({ label: F.text('ชื่อที่แสดง', x.label), file: F.file('ไฟล์', x.file, { folder: 'storage', accept: '.pdf,.doc,.docx,.xls,.xlsx,.zip,application/pdf', kind: 'pdf' }) }), { label: '', file: '' }, '+ เพิ่มไฟล์'));
+    }
+    return {
+      el,
+      get: () => {
+        const out = { type: t };
+        for (const [k, f] of Object.entries(parts)) out[k] = f.get();
+        ['layout', 'columns'].forEach((k) => { if (out[k] != null) out[k] = +out[k]; });
+        if (t === 'media' && out.layout === 1) out.bg = 'navy';
+        return out;
+      },
+    };
+  }
+
+  // ----- template helpers -----
+  const T = () => state.data.templates || (state.data.templates = { sections: [], pages: [], defaults: {} });
+  const sectionTpl = (id) => T().sections.find((s) => s.id === id);
+  const pageBlocks = (tpl) => clone(tpl.blocks || (tpl.sections || []).map((id) => sectionTpl(id)?.block).filter(Boolean));
+  const newId = (prefix) => `${prefix}-${Date.now().toString(36)}`;
+
+  function modal(title, bodyEl, { wide = false } = {}) {
+    const m = h(`<div class="modal"><div class="modal-card ${wide ? 'wide' : ''}"><div class="modal-head"><b>${esc(title)}</b><button type="button" class="btn sm close">ปิด</button></div><div class="modal-body"></div></div></div>`);
+    $('.modal-body', m).appendChild(bodyEl);
+    document.body.appendChild(m);
+    const close = () => m.remove();
+    $('.close', m).onclick = close;
+    m.addEventListener('click', (e) => { if (e.target === m) close(); });
+    return close;
+  }
+
+  /** choose a section template (or a blank section of any type) */
+  function pickSection() {
+    return new Promise((resolve) => {
+      const body = h('<div></div>');
+      body.appendChild(h('<h3 style="margin-top:0">ส่วนเนื้อหาสำเร็จรูป</h3>'));
+      const grid = h('<div class="tpl-grid"></div>');
+      T().sections.forEach((s) => grid.appendChild(h(`<button type="button" class="tpl-card" data-id="${esc(s.id)}">${thumb(s.block)}<b>${esc(s.name)}</b><span>${esc(s.description || BTYPES[typeOf(s.block)])}</span></button>`)));
+      body.appendChild(grid);
+      body.appendChild(h('<h3>เริ่มจากส่วนว่าง</h3>'));
+      const g2 = h('<div class="tpl-grid small"></div>');
+      Object.keys(BTYPES).forEach((k) => g2.appendChild(h(`<button type="button" class="tpl-card" data-blank="${k}">${thumb(BLANK[k])}<b>${esc(BTYPES[k])}</b></button>`)));
+      body.appendChild(g2);
+      let done = false;
+      const close = modal('เลือกรูปแบบส่วนเนื้อหา', body, { wide: true });
+      body.addEventListener('click', (e) => {
+        const c = e.target.closest('.tpl-card'); if (!c) return;
+        done = true; close();
+        resolve(c.dataset.blank ? clone(BLANK[c.dataset.blank]) : clone(sectionTpl(c.dataset.id).block));
+      });
+      const obs = new MutationObserver(() => { if (!document.body.contains(body)) { obs.disconnect(); if (!done) resolve(null); } });
+      obs.observe(document.body, { childList: true });
+    });
+  }
+
+  /** choose a page template; resolves {blocks, mode:'append'|'replace'} or null */
+  function pickPage(kind) {
+    return new Promise((resolve) => {
+      const list = T().pages.filter((p) => !p.for || p.for === kind || p.for === 'any');
+      const body = h(`<div><p class="hint" style="margin-top:0">เลือกชุดส่วนเนื้อหาสำเร็จรูป แล้วแก้ข้อความ/รูปตามต้องการ</p>
+        <label class="check" style="margin-bottom:12px"><input type="checkbox" class="rep"> แทนที่ส่วนเนื้อหาเดิมทั้งหมด (ถ้าไม่ติ๊ก จะเพิ่มต่อท้าย)</label></div>`);
+      const grid = h('<div class="tpl-list"></div>');
+      list.forEach((p) => {
+        const blocks = pageBlocks(p);
+        grid.appendChild(h(`<button type="button" class="tpl-row" data-id="${esc(p.id)}"><div class="strip">${blocks.slice(0, 6).map(thumb).join('')}</div><div><b>${esc(p.name)}</b><span>${esc(p.description || '')}</span><small>${blocks.length} ส่วน</small></div></button>`));
+      });
+      if (!list.length) grid.appendChild(h('<p class="hint">ยังไม่มีเทมเพลตทั้งหน้าสำหรับประเภทนี้</p>'));
+      body.appendChild(grid);
+      let done = false;
+      const close = modal('ใช้เทมเพลตทั้งหน้า', body, { wide: true });
+      grid.addEventListener('click', (e) => {
+        const c = e.target.closest('.tpl-row'); if (!c) return;
+        done = true; const mode = $('.rep', body).checked ? 'replace' : 'append'; close();
+        resolve({ blocks: pageBlocks(T().pages.find((p) => p.id === c.dataset.id)), mode });
+      });
+      const obs = new MutationObserver(() => { if (!document.body.contains(body)) { obs.disconnect(); if (!done) resolve(null); } });
+      obs.observe(document.body, { childList: true });
+    });
+  }
+
+  function saveSectionAsTemplate(block) {
+    const name = prompt('ตั้งชื่อเทมเพลตส่วนนี้', BTYPES[typeOf(block)] + ' (ของฉัน)');
+    if (!name) return;
+    T().sections.push({ id: newId('sec'), name: name.trim(), description: 'บันทึกจากหน้าแก้ไข', block: clone(block) });
+    markDirty('templates'); toast('บันทึกเป็นเทมเพลตแล้ว — เลือกใช้ได้จากปุ่ม "+ เพิ่มส่วนเนื้อหา"');
+  }
+
+  /**
+   * The section list used in product / blog / page-template editors.
+   * opts: { folder, kind: 'product'|'blog', vars: () => ({title}) }
+   */
+  function blocksField(label, blocks, opts = {}) {
+    const rows = [];
+    const el = h(`<div class="sections"><div class="sections-head"><h3>${esc(label)}</h3><div class="acts">
+        <button type="button" class="btn sm usepage">ใช้เทมเพลตทั้งหน้า</button>
+        <button type="button" class="btn sm savepage">บันทึกทั้งหน้าเป็นเทมเพลต</button></div></div>
+      <div class="rows" style="display:grid;gap:12px"></div>
+      <button type="button" class="btn primary sm addsec" style="margin-top:12px">+ เพิ่มส่วนเนื้อหา (เลือกรูปแบบ)</button></div>`);
+    const box = $('.rows', el);
+    const renum = () => {
+      box.innerHTML = '';
+      if (!rows.length) box.appendChild(h('<p class="hint">ยังไม่มีส่วนเนื้อหา — กด "+ เพิ่มส่วนเนื้อหา" หรือ "ใช้เทมเพลตทั้งหน้า"</p>'));
+      rows.forEach((r, i) => { $('.n', r.wrap).textContent = `#${i + 1} · ${BTYPES[r.type]}`; r.wrap.classList.toggle('off', !r.active); $('.vis', r.wrap).textContent = r.active ? 'ซ่อน' : 'แสดง'; box.appendChild(r.wrap); });
+    };
+    const add = (raw, at = rows.length, open = false) => {
+      const b = norm(opts.vars ? fillVars(raw, opts.vars()) : raw);
+      const ed = blockEditor(b, opts.folder);
+      const wrap = h(`<div class="block sec"><div class="block-head"><button type="button" class="link-btn tog"><span class="caret">▸</span> <b class="n"></b> <span class="hint prev"></span></button>
+        <div class="acts"><button type="button" class="btn sm up" title="เลื่อนขึ้น">▲</button><button type="button" class="btn sm dn" title="เลื่อนลง">▼</button>
+        <button type="button" class="btn sm vis"></button><button type="button" class="btn sm dup">ทำซ้ำ</button><button type="button" class="btn sm tpl" title="บันทึกส่วนนี้เป็นเทมเพลต">☆ เทมเพลต</button>
+        <button type="button" class="btn sm danger rm">ลบ</button></div></div><div class="sec-body"></div></div>`);
+      $('.sec-body', wrap).appendChild(ed.el);
+      const r = { wrap, ed, type: b.type, active: b.active !== false };
+      const prev = () => { const g = ed.get(); $('.prev', wrap).textContent = (g.title || Zstrip(g.html) || g.author || '').slice(0, 60); };
+      const setOpen = (o) => { wrap.classList.toggle('open', o); $('.caret', wrap).textContent = o ? '▾' : '▸'; if (!o) prev(); };
+      $('.tog', wrap).onclick = () => setOpen(!wrap.classList.contains('open'));
+      $('.up', wrap).onclick = () => { const i = rows.indexOf(r); if (i > 0) { rows.splice(i, 1); rows.splice(i - 1, 0, r); renum(); } };
+      $('.dn', wrap).onclick = () => { const i = rows.indexOf(r); if (i < rows.length - 1) { rows.splice(i, 1); rows.splice(i + 1, 0, r); renum(); } };
+      $('.vis', wrap).onclick = () => { r.active = !r.active; renum(); };
+      $('.dup', wrap).onclick = () => add({ ...ed.get(), active: r.active }, rows.indexOf(r) + 1, true);
+      $('.tpl', wrap).onclick = () => saveSectionAsTemplate(ed.get());
+      $('.rm', wrap).onclick = () => { if (confirm('ลบส่วนนี้?')) { rows.splice(rows.indexOf(r), 1); renum(); } };
+      rows.splice(at, 0, r); setOpen(open); renum();
+      if (open) setTimeout(() => wrap.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
+    };
+    (blocks || []).forEach((b) => add(b));
+    $('.addsec', el).onclick = async () => { const b = await pickSection(); if (b) add(b, rows.length, true); };
+    $('.usepage', el).onclick = async () => {
+      const r = await pickPage(opts.kind || 'product'); if (!r) return;
+      if (r.mode === 'replace') { if (rows.length && !confirm('แทนที่ส่วนเนื้อหาเดิมทั้งหมด?')) return; rows.length = 0; }
+      r.blocks.forEach((b) => add(b)); renum(); toast(`เพิ่ม ${r.blocks.length} ส่วนจากเทมเพลตแล้ว`);
+    };
+    $('.savepage', el).onclick = () => {
+      if (!rows.length) { toast('ยังไม่มีส่วนเนื้อหาให้บันทึก', 'err'); return; }
+      const name = prompt('ตั้งชื่อเทมเพลตทั้งหน้า'); if (!name) return;
+      T().pages.push({ id: newId('page'), name: name.trim(), for: opts.kind || 'product', description: `${rows.length} ส่วน · บันทึกจากหน้าแก้ไข`, blocks: rows.map((r) => ({ ...r.ed.get(), active: r.active })) });
+      markDirty('templates'); toast('บันทึกเทมเพลตทั้งหน้าแล้ว');
+    };
+    if (opts.hideTemplateButtons) { $('.usepage', el).remove(); $('.savepage', el).remove(); }
+    return { el, get: () => rows.map((r) => ({ ...r.ed.get(), ...(r.active ? {} : { active: false }) })) };
+  }
+  const Zstrip = (html) => { const d = document.createElement('div'); d.innerHTML = html || ''; return (d.textContent || '').trim(); };
+
+  // ----- Templates tab -----
+  function listTemplates() {
+    crumb([['เทมเพลตเนื้อหา']]);
+    const t = T();
+    const pageOpts = (kind) => [['', '— ไม่ใช้ (เริ่มจากหน้าว่าง) —'], ...t.pages.filter((p) => !p.for || p.for === kind || p.for === 'any').map((p) => [p.id, p.name])];
+    view().innerHTML = '';
+    const wrap = h(`<div>
+      <div class="form" style="margin-bottom:18px"><h2>เทมเพลตเริ่มต้น</h2><p class="hint" style="margin:0">เมื่อกด "+ เพิ่มสินค้า" หรือ "+ เพิ่มบทความ" ระบบจะใส่ส่วนเนื้อหาจากเทมเพลตนี้ให้อัตโนมัติ คำว่า {{title}} ในเทมเพลตจะถูกแทนด้วยชื่อสินค้า/บทความ</p><div class="grid2 defs"></div></div>
+      <div class="toolbar"><h2 style="margin:0;flex:1">เทมเพลตทั้งหน้า</h2><button class="btn primary sm" id="newPage">+ สร้างเทมเพลตทั้งหน้า</button></div>
+      <table><thead><tr><th>ตัวอย่าง</th><th>ชื่อ</th><th class="hide-sm">ใช้กับ</th></tr></thead><tbody id="pages"></tbody></table>
+      <div class="toolbar" style="margin-top:26px"><h2 style="margin:0;flex:1">ส่วนเนื้อหาสำเร็จรูป</h2><button class="btn primary sm" id="newSec">+ สร้างส่วนสำเร็จรูป</button></div>
+      <table><thead><tr><th>ตัวอย่าง</th><th>ชื่อ</th><th class="hide-sm">ประเภท</th></tr></thead><tbody id="secs"></tbody></table></div>`);
+    view().appendChild(wrap);
+    const dP = F.select('สินค้าใหม่เริ่มจาก', t.defaults?.product || '', pageOpts('product'));
+    const dB = F.select('บทความใหม่เริ่มจาก', t.defaults?.blog || '', pageOpts('blog'));
+    $('.defs', wrap).append(dP.el, dB.el);
+    const saveDefaults = () => { t.defaults = { product: dP.get(), blog: dB.get() }; markDirty('templates'); toast('บันทึกเทมเพลตเริ่มต้นแล้ว'); };
+    $('select', dP.el).onchange = saveDefaults; $('select', dB.el).onchange = saveDefaults;
+    const forName = { product: 'สินค้า', blog: 'บทความ', any: 'ทุกประเภท' };
+    $('#pages', wrap).innerHTML = t.pages.map((p) => `<tr class="row" data-id="${esc(p.id)}"><td><div class="strip">${pageBlocks(p).slice(0, 5).map(thumb).join('')}</div></td><td><b>${esc(p.name)}</b><div class="hint">${esc(p.description || '')}</div></td><td class="hide-sm"><span class="tag">${forName[p.for] || 'ทุกประเภท'}</span></td></tr>`).join('') || '<tr><td colspan="3" class="hint">ยังไม่มี</td></tr>';
+    $('#secs', wrap).innerHTML = t.sections.map((s) => `<tr class="row" data-id="${esc(s.id)}"><td>${thumb(s.block)}</td><td><b>${esc(s.name)}</b><div class="hint">${esc(s.description || '')}</div></td><td class="hide-sm"><span class="tag">${BTYPES[typeOf(s.block)]}</span></td></tr>`).join('') || '<tr><td colspan="3" class="hint">ยังไม่มี</td></tr>';
+    $$('#pages tr.row', wrap).forEach((tr) => (tr.onclick = () => editPageTemplate(tr.dataset.id)));
+    $$('#secs tr.row', wrap).forEach((tr) => (tr.onclick = () => editSectionTemplate(tr.dataset.id)));
+    $('#newSec', wrap).onclick = async () => { const b = await pickSection(); if (!b) return; editSectionTemplate(null, b); };
+    $('#newPage', wrap).onclick = () => editPageTemplate(null);
+  }
+
+  function editSectionTemplate(id, seed) {
+    const t = T();
+    const isNew = !id;
+    const s = isNew ? { id: newId('sec'), name: '', description: '', block: seed || clone(BLANK.media) } : clone(sectionTpl(id));
+    crumb([['เทมเพลตเนื้อหา', 'templates'], [isNew ? 'ส่วนสำเร็จรูปใหม่' : s.name]]);
+    const name = F.text('ชื่อเทมเพลต *', s.name), desc = F.text('คำอธิบายสั้น', s.description);
+    const ed = blockEditor(s.block, 'products');
+    const preview = h(`<div class="hint">ประเภท: ${BTYPES[typeOf(s.block)]} — ใส่ {{title}} ในข้อความได้ ระบบจะแทนด้วยชื่อสินค้า/บทความตอนนำไปใช้</div>`);
+    formShell(isNew ? 'สร้างส่วนสำเร็จรูป' : `แก้ไขเทมเพลต: ${s.name}`, [F.group({ a: name, b: desc }), preview, h('<h3>เนื้อหาตั้งต้น</h3>'), ed], () => {
+      if (!name.get()) throw new Error('กรุณาตั้งชื่อเทมเพลต');
+      Object.assign(s, { name: name.get(), description: desc.get(), block: ed.get() });
+      if (isNew) t.sections.push(s); else t.sections[t.sections.findIndex((x) => x.id === s.id)] = s;
+      markDirty('templates'); toast('บันทึกเทมเพลตแล้ว'); go('templates');
+    }, isNew ? null : () => {
+      const used = t.pages.filter((p) => (p.sections || []).includes(s.id));
+      if (used.length && !confirm(`เทมเพลตนี้ถูกใช้ใน: ${used.map((p) => p.name).join(', ')}\nลบแล้วส่วนนี้จะหายจากเทมเพลตเหล่านั้น ยืนยัน?`)) return;
+      t.sections = t.sections.filter((x) => x.id !== s.id);
+      t.pages.forEach((p) => { if (p.sections) p.sections = p.sections.filter((x) => x !== s.id); });
+      markDirty('templates'); go('templates');
+    });
+  }
+
+  function editPageTemplate(id) {
+    const t = T();
+    const isNew = !id;
+    const p = isNew ? { id: newId('page'), name: '', for: 'product', description: '', blocks: [] } : clone(t.pages.find((x) => x.id === id));
+    crumb([['เทมเพลตเนื้อหา', 'templates'], [isNew ? 'เทมเพลตทั้งหน้าใหม่' : p.name]]);
+    const name = F.text('ชื่อเทมเพลต *', p.name), desc = F.text('คำอธิบายสั้น', p.description);
+    const forF = F.select('ใช้กับ', p.for || 'product', [['product', 'สินค้า'], ['blog', 'บทความ / รีวิว'], ['any', 'ทุกประเภท']]);
+    const blocks = blocksField('ส่วนเนื้อหาในเทมเพลตนี้ (เรียงจากบนลงล่าง)', pageBlocks(p), { folder: 'products', kind: p.for, hideTemplateButtons: true });
+    formShell(isNew ? 'สร้างเทมเพลตทั้งหน้า' : `แก้ไขเทมเพลต: ${p.name}`, [F.group({ a: name, b: forF }), desc, blocks], () => {
+      if (!name.get()) throw new Error('กรุณาตั้งชื่อเทมเพลต');
+      const out = { id: p.id, name: name.get(), for: forF.get(), description: desc.get(), blocks: blocks.get() };
+      if (isNew) t.pages.push(out); else t.pages[t.pages.findIndex((x) => x.id === p.id)] = out;
+      markDirty('templates'); toast('บันทึกเทมเพลตแล้ว'); go('templates');
+    }, isNew ? null : () => {
+      t.pages = t.pages.filter((x) => x.id !== p.id);
+      ['product', 'blog'].forEach((k) => { if (t.defaults?.[k] === p.id) t.defaults[k] = ''; });
+      markDirty('templates'); go('templates');
+    });
+  }
+
+  const defaultBlocks = (kind) => { const id = T().defaults?.[kind]; const tpl = id && T().pages.find((p) => p.id === id); return tpl ? pageBlocks(tpl) : []; };
 
   // ---------------- views ----------------
   const view = () => $('#view');
@@ -273,7 +574,7 @@
   function go(tab) {
     state.tab = tab;
     $$('#tabs button').forEach((b) => b.classList.toggle('on', b.dataset.tab === tab));
-    ({ products: listProducts, blogs: listBlogs, categories: listCategories, banners: editBanners, settings: editSettings, pages: editPages })[tab]();
+    ({ products: listProducts, blogs: listBlogs, categories: listCategories, banners: editBanners, settings: editSettings, pages: editPages, templates: listTemplates })[tab]();
     window.scrollTo(0, 0);
   }
 
@@ -325,7 +626,7 @@
   function editProduct(id) {
     const d = state.data;
     const isNew = id === null;
-    const p = isNew ? { id: Math.max(0, ...d.products.map((x) => x.id)) + 1, slug: '', title: '', subtitle: '', parent: 0, categories: [], featured: false, active: true, order: d.products.length, cover: '', catalog: '', youtube: '', about_html: '', gallery: [], blocks: [], related_blogs: [], meta_title: '', meta_description: '', meta_keywords: '' } : clone(d.products.find((x) => x.id === id));
+    const p = isNew ? { id: Math.max(0, ...d.products.map((x) => x.id)) + 1, slug: '', title: '', subtitle: '', parent: 0, categories: [], featured: false, active: true, order: d.products.length, cover: '', catalog: '', youtube: '', about_html: '', gallery: [], blocks: defaultBlocks('product'), related_blogs: [], meta_title: '', meta_description: '', meta_keywords: '' } : clone(d.products.find((x) => x.id === id));
     crumb([['สินค้า', 'products'], [isNew ? 'เพิ่มสินค้าใหม่' : p.title]]);
     const f = {
       title: F.text('ชื่อสินค้า *', p.title),
@@ -339,7 +640,7 @@
     const yt = F.text('YouTube (ลิงก์หรือรหัสวิดีโอ)', p.youtube, { placeholder: 'https://youtu.be/xxxxxxxxxxx' });
     const about = F.html('About Product', p.about_html);
     const gallery = F.gallery('รูปสไลด์ด้านบนของหน้าสินค้า', p.gallery);
-    const blocks = F.list('ส่วนเนื้อหาเพิ่มเติม', p.blocks, (b) => blockEditor(b, 'products'), { layout: 4, title: '', image: '', html: '' }, '+ เพิ่มส่วนเนื้อหา');
+    const blocks = blocksField('ส่วนเนื้อหาของหน้าสินค้า (ใต้ About Product)', p.blocks, { folder: 'products', kind: 'product', vars: () => ({ title: f.title.get() }) });
     const rel = F.checks('บทความที่เกี่ยวข้อง', p.related_blogs, d.blogs.filter((b) => b.type === 'blog').map((b) => [b.slug, b.title]));
     const seo = F.group({ meta_title: F.text('SEO title', p.meta_title), meta_keywords: F.text('SEO keywords', p.meta_keywords), meta_description: F.area('SEO description', p.meta_description) });
     formShell(isNew ? 'เพิ่มสินค้าใหม่' : `แก้ไข: ${p.title}`, [F.group({ a: f.title, b: f.slug }), F.group({ a: f.subtitle, b: f.parent }), cats, flags, media, yt, about, gallery, blocks, rel, h('<h3>SEO</h3>'), seo], () => {
@@ -347,7 +648,7 @@
       const slug = f.slug.get() || slugify(title);
       if (d.products.some((x) => x.slug === slug && x.id !== p.id)) throw new Error('Slug นี้ถูกใช้แล้ว');
       const oldSlug = p.slug;
-      Object.assign(p, { title, slug, subtitle: f.subtitle.get(), parent: +f.parent.get(), categories: cats.get(), ...flags.get(), ...media.get(), youtube: yt.get(), about_html: about.get(), gallery: gallery.get(), blocks: blocks.get(), related_blogs: rel.get(), ...seo.get() });
+      Object.assign(p, { title, slug, subtitle: f.subtitle.get(), parent: +f.parent.get(), categories: cats.get(), ...flags.get(), ...media.get(), youtube: yt.get(), about_html: about.get(), gallery: gallery.get(), blocks: fillVars(blocks.get(), { title }), related_blogs: rel.get(), ...seo.get() });
       if (isNew) d.products.push(p); else d.products[d.products.findIndex((x) => x.id === p.id)] = p;
       if (oldSlug && oldSlug !== slug) relinkProduct(oldSlug, slug);
       markDirty('products'); toast('บันทึกแล้ว (กด "เผยแพร่" เพื่อขึ้นเว็บ)'); go('products');
@@ -389,21 +690,21 @@
   function editBlog(id) {
     const d = state.data;
     const isNew = id === null;
-    const b = isNew ? { id: Math.max(0, ...d.blogs.map((x) => x.id)) + 1, slug: '', title: '', subtitle: '', type: 'blog', featured: false, active: true, order: 0, cover: '', blocks: [], meta_title: '', meta_description: '' } : clone(d.blogs.find((x) => x.id === id));
+    const b = isNew ? { id: Math.max(0, ...d.blogs.map((x) => x.id)) + 1, slug: '', title: '', subtitle: '', type: 'blog', featured: false, active: true, order: 0, cover: '', blocks: defaultBlocks('blog'), meta_title: '', meta_description: '' } : clone(d.blogs.find((x) => x.id === id));
     crumb([['บทความ', 'blogs'], [isNew ? 'เพิ่มบทความใหม่' : b.title]]);
     const title = F.text('หัวข้อ *', b.title), slug = F.text('Slug', b.slug, { hint: 'เว้นว่างเพื่อสร้างจากหัวข้อ' });
     const subtitle = F.text('บรรทัดรอง (เช่น วันที่ | ผู้เขียน หรือ ชนิดกีฬา)', b.subtitle);
     const type = F.select('ประเภท', b.type, [['blog', 'บทความ (Blogs)'], ['review', 'รีวิวนักกีฬา (Product reviews)']]);
     const flags = F.group({ featured: F.check('แสดงในสไลด์ใหญ่หน้า Blog', b.featured), active: F.check('แสดงบนเว็บ', b.active !== false), order: F.num('ลำดับ', b.order) }, 'grid3');
     const cover = F.file('รูปหน้าปก', b.cover, { folder: 'blog' });
-    const blocks = F.list('เนื้อหา', b.blocks, (x) => blockEditor(x, 'blog'), { layout: 3, title: '', image: '', html: '' }, '+ เพิ่มย่อหน้า/ส่วนเนื้อหา');
+    const blocks = blocksField('เนื้อหาบทความ', b.blocks, { folder: 'blog', kind: 'blog', vars: () => ({ title: title.get() }) });
     const seo = F.group({ meta_title: F.text('SEO title', b.meta_title), meta_description: F.area('SEO description', b.meta_description) });
     formShell(isNew ? 'เพิ่มบทความใหม่' : `แก้ไข: ${b.title}`, [F.group({ a: title, b: slug }), F.group({ a: subtitle, b: type }), flags, cover, blocks, h('<h3>SEO</h3>'), seo], () => {
       const t = title.get(); if (!t) throw new Error('กรุณาใส่หัวข้อ');
       const s = slug.get() || slugify(t);
       if (d.blogs.some((x) => x.slug === s && x.id !== b.id)) throw new Error('Slug นี้ถูกใช้แล้ว');
       const old = b.slug;
-      Object.assign(b, { title: t, slug: s, subtitle: subtitle.get(), type: type.get(), ...flags.get(), cover: cover.get(), blocks: blocks.get(), ...seo.get() });
+      Object.assign(b, { title: t, slug: s, subtitle: subtitle.get(), type: type.get(), ...flags.get(), cover: cover.get(), blocks: fillVars(blocks.get(), { title: t }), ...seo.get() });
       if (isNew) d.blogs.push(b); else d.blogs[d.blogs.findIndex((x) => x.id === b.id)] = b;
       if (old && old !== s) d.products.forEach((p) => { const i = p.related_blogs.indexOf(old); if (i >= 0) { p.related_blogs[i] = s; markDirty('products'); } });
       markDirty('blogs'); toast('บันทึกแล้ว (กด "เผยแพร่" เพื่อขึ้นเว็บ)'); go('blogs');

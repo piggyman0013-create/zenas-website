@@ -10,12 +10,7 @@ Zenas.page(async (root, d, s) => {
   setMeta({ title: b.meta_title || b.title, description: b.meta_description || Zenas.stripTags(b.blocks.map((x) => x.html).join(' ')).slice(0, 160), image: b.cover }, s);
 
   const recent = d.blogs.filter((x) => x.active !== false && x.slug !== b.slug && x.type === 'blog').sort((a, c) => c.id - a.id).slice(0, 5);
-  const blocks = b.blocks.filter((x) => x.image || x.title || Zenas.stripTags(x.html).trim()).map((x) => `
-    <div class="post-blk ${x.image ? 'has-img' : ''}">
-      ${x.image && +x.layout !== 3 ? `<img src="${esc(x.image)}" alt="${esc(x.title)}" loading="lazy">` : ''}
-      <div>${x.title ? `<h3>${esc(x.title)}</h3>` : ''}<div class="rich">${x.html || ''}</div></div>
-      ${x.image && +x.layout === 3 ? `<img src="${esc(x.image)}" alt="${esc(x.title)}" loading="lazy">` : ''}
-    </div>`).join('');
+  const blocks = `<div class="post-body">${Zenas.blocksHtml(b.blocks)}</div>`;
 
   const url = encodeURIComponent(location.href);
   root.innerHTML = `
