@@ -32,7 +32,7 @@
   "title": "Physical Fitness Test",
   "description": "Accurate evaluations to measure fitness levels, providing insights into strengths and overall physical health",
   "image": "media/products/1698735504829-side-view-muscly-athletic-man-holding-weights.webp",
-  "order": 3,
+  "order": 2,
   "active": true
  },
  {
@@ -50,7 +50,7 @@
   "title": "Longevity",
   "description": "",
   "image": "media/products/1760180797113-LongEvity.webp",
-  "order": 2,
+  "order": 3,
   "active": true
  }
 ]
