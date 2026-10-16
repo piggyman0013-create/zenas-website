@@ -23,7 +23,7 @@
   "title": "Recovery Health",
   "description": "Focused solutions that promote faster recovery, ensuring you return to optimal health and maintain overall well-being",
   "image": "media/products/1698734998767-content-medium-450-x-450-px--242-x-300-px---2.webp",
-  "order": 5,
+  "order": 4,
   "active": true
  },
  {
@@ -41,7 +41,7 @@
   "title": "Others",
   "description": "Discover a wide selection of essential health equipment for support your well-being",
   "image": "media/products/1692961279242-nonedna_group_of_girls_and_boys_exercise_with_high_tech_sport_e_5f.webp",
-  "order": 4,
+  "order": 5,
   "active": false
  },
  {
@@ -51,6 +51,6 @@
   "description": "",
   "image": "media/products/1760180797113-LongEvity.webp",
   "order": 3,
-  "active": true
+  "active": false
  }
 ]
