@@ -23,7 +23,7 @@
   "title": "Recovery Health",
   "description": "Focused solutions that promote faster recovery, ensuring you return to optimal health and maintain overall well-being",
   "image": "media/products/1698734998767-content-medium-450-x-450-px--242-x-300-px---2.webp",
-  "order": 2,
+  "order": 5,
   "active": true
  },
  {
@@ -50,16 +50,7 @@
   "title": "Longevity",
   "description": "",
   "image": "media/products/1760180797113-LongEvity.webp",
-  "order": 5,
-  "active": true
- },
- {
-  "id": 8,
-  "slug": "QWRQRF",
-  "title": "aSASADASF",
-  "description": "ASDFAFASF",
-  "image": "",
-  "order": 6,
+  "order": 2,
   "active": true
  }
 ]
